@@ -125,6 +125,13 @@ body::before {
   font-weight: 400;
 }
 
+.community-badge {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+  font-style: italic;
+}
+
 .header-line {
   width: 100%;
   height: 1px;
@@ -862,13 +869,50 @@ textarea.text-input {
   transform: scale(0.97);
 }
 
+/* === PUBLIC RECORD NOTICE === */
+.public-record-notice {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  padding: 10px 12px;
+  background: rgba(126, 200, 227, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  line-height: 1.4;
+  margin-bottom: 14px;
+}
+
 /* === FOOTER === */
 .app-footer {
-  padding: 10px 0 14px;
+  padding: 16px 0 18px;
   text-align: center;
   font-size: 0.72rem;
   color: var(--text-muted);
   border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.footer-about {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.footer-links a {
+  color: var(--ice-400);
+  text-decoration: none;
+  font-size: 0.75rem;
+}
+
+.footer-links a:active {
+  text-decoration: underline;
+}
+
+.footer-copy {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  margin-top: 2px;
 }
 
 /* === UTILITY === */

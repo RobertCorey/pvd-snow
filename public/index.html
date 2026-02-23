@@ -14,10 +14,6 @@
 
     <!-- HEADER -->
     <header class="app-header">
-      <div class="header-badge">
-        <span class="pulse"></span>
-        Snow Emergency Active
-      </div>
       <h1 class="app-title">
         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
           <line x1="12" y1="2" x2="12" y2="22"/>
@@ -31,6 +27,7 @@
         PVD Snow
       </h1>
       <p class="app-subtitle">Report unplowed streets &amp; unshoveled sidewalks in Providence</p>
+      <p class="community-badge">Community project &mdash; not affiliated with the City of Providence</p>
       <div class="header-line"></div>
     </header>
 
@@ -152,6 +149,8 @@
           <textarea class="text-input" id="descriptionInput" placeholder="Any additional details..." rows="2"></textarea>
         </div>
 
+        <p class="public-record-notice">Your report (photo, location, description) will be submitted as a public record to the City of Providence 311 system.</p>
+
         <div class="form-section">
           <button type="button" class="contact-toggle" id="contactToggle">
             <span class="chevron">›</span>
@@ -202,7 +201,11 @@
 
     <!-- FOOTER -->
     <footer class="app-footer">
-      PVD Snow &middot; Providence, RI
+      <p class="footer-about">PVD Snow is a volunteer project. We forward your reports to the city's official 311 system on your behalf.</p>
+      <p class="footer-links">
+        <a href="https://311.providenceri.gov" target="_blank" rel="noopener">Use the official 311 portal directly</a>
+      </p>
+      <p class="footer-copy">PVD Snow &middot; Providence, RI</p>
     </footer>
   </div>
 
