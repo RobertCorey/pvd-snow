@@ -270,8 +270,9 @@ export class PortalSubmitter {
 
     if (dryRun) {
       console.log('[portal]   DRY RUN — stopping before submit. Form is filled and ready.');
-      // Pause so you can inspect the browser window
-      await page.waitForTimeout(5_000);
+      console.log('[portal]   Browser will stay open. Close it manually or kill the process to continue.');
+      // Wait indefinitely — let the operator inspect the filled form
+      await page.waitForEvent('close', { timeout: 0 });
       return undefined;
     }
 

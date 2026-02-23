@@ -7,7 +7,7 @@
   <title>PVD Snow</title>
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/icons/icon-192.svg">
-  <link rel="stylesheet" href="/style.css?v=3">
+  <link rel="stylesheet" href="/style.css?v=4">
 </head>
 <body>
   <div class="app-container">
@@ -100,21 +100,21 @@
         </label>
       </div>
 
-      <!-- STEP 2: Location (#2: better helper text + hint) -->
+      <!-- STEP 2: Location (state-driven layout) -->
       <div class="step" data-step="2">
-        <h2 class="step-heading">Confirm location</h2>
+        <h2 class="step-heading" id="locationHeading">Set location</h2>
         <p class="step-desc" id="locationStatus">Checking photo for location data...</p>
-        <div class="location-section">
-          <div class="location-row">
-            <button type="button" class="detect-btn" id="detectLocationBtn">
-              <svg class="detect-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
-              </svg>
-              Detect
-            </button>
-            <input type="text" class="text-input" id="addressInput" placeholder="Street address or intersection" autocomplete="street-address">
-          </div>
+        <div class="location-section" id="locationSection">
+          <button type="button" class="detect-btn-hero" id="detectLocationBtn">
+            <svg class="detect-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+            </svg>
+            <span class="detect-label">Detect my location</span>
+            <span class="detect-subtitle">Use your device's GPS</span>
+          </button>
+          <div class="location-divider"><span>or enter address manually</span></div>
+          <input type="text" class="text-input" id="addressInput" placeholder="Street address or intersection" autocomplete="street-address">
           <div class="lat-lng" id="latLng"></div>
           <p class="location-hint">Enter the nearest address or intersection, e.g. "Benefit St &amp; Waterman St"</p>
         </div>
@@ -214,7 +214,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
   <!-- App -->
-  <script src="/app.js?v=3"></script>
+  <script src="/app.js?v=4"></script>
 
   <!-- Service Worker -->
   <script>

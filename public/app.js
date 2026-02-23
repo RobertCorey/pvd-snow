@@ -36,6 +36,8 @@ const locationStatus = document.getElementById('locationStatus');
 const detectBtn = document.getElementById('detectLocationBtn');
 const addressInput = document.getElementById('addressInput');
 const latLngEl = document.getElementById('latLng');
+const locationSection = document.getElementById('locationSection');
+const locationHeading = document.getElementById('locationHeading');
 const descriptionInput = document.getElementById('descriptionInput');
 const contactToggle = document.getElementById('contactToggle');
 const contactFields = document.getElementById('contactFields');
@@ -62,6 +64,19 @@ let photoDataUrl = null;
 let currentLat = null;
 let currentLng = null;
 let hasExifGps = false;
+
+// --- Location state machine ---
+function setLocationState(state) {
+  locationSection.classList.remove('state-confirmed', 'state-needs-input', 'state-detecting', 'state-detect-failed');
+  if (state) {
+    locationSection.classList.add('state-' + state);
+  }
+  if (state === 'confirmed') {
+    locationHeading.textContent = 'Confirm location';
+  } else {
+    locationHeading.textContent = 'Set location';
+  }
+}
 
 // --- Step navigation ---
 function goToStep(n) {
@@ -169,12 +184,14 @@ photoInput.addEventListener('change', async (e) => {
     locationStatus.textContent = 'Location detected from photo.';
     photoExifStatus.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,7 6,10 11,4"/></svg> Photo + location attached';
     photoExifStatus.classList.remove('no-gps');
+    setLocationState('confirmed');
     reverseGeocode(currentLat, currentLng);
   } else {
     hasExifGps = false;
     locationStatus.textContent = 'No location in photo. Use Detect or type an address.';
     photoExifStatus.textContent = 'Photo attached — no location data';
     photoExifStatus.classList.add('no-gps');
+    setLocationState('needs-input');
   }
 
   validateStep();
@@ -346,11 +363,14 @@ async function reverseGeocode(lat, lng) {
 // --- Step 2: Location fallback ---
 detectBtn.addEventListener('click', () => {
   if (!navigator.geolocation) {
-    latLngEl.textContent = 'Geolocation not supported';
+    locationStatus.textContent = 'Geolocation not supported by this browser.';
+    setLocationState('detect-failed');
+    addressInput.focus();
     return;
   }
 
   detectBtn.classList.add('detecting');
+  setLocationState('detecting');
   latLngEl.textContent = 'Detecting…';
 
   navigator.geolocation.getCurrentPosition(
@@ -360,11 +380,14 @@ detectBtn.addEventListener('click', () => {
       latLngEl.textContent = `${currentLat.toFixed(5)}, ${currentLng.toFixed(5)}`;
       detectBtn.classList.remove('detecting');
       locationStatus.textContent = 'Location detected from GPS.';
+      setLocationState('confirmed');
       reverseGeocode(currentLat, currentLng);
     },
     () => {
       detectBtn.classList.remove('detecting');
-      latLngEl.textContent = 'Location access denied';
+      locationStatus.textContent = 'Could not access location. Enter an address instead.';
+      setLocationState('detect-failed');
+      addressInput.focus();
     },
     { enableHighAccuracy: true, timeout: 10000 }
   );
@@ -442,6 +465,7 @@ submitAnother.addEventListener('click', () => {
   addressInput.value = '';
   latLngEl.textContent = '';
   locationStatus.textContent = 'Checking photo for location data...';
+  setLocationState(null);
   descriptionInput.value = '';
   nameInput.value = '';
   emailInput.value = '';

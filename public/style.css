@@ -446,45 +446,122 @@ body::before {
   margin-top: 12px;
 }
 
-.location-row {
+/* Hero detect button — full-width, prominent */
+.detect-btn-hero {
   display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.detect-btn {
-  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 6px;
-  padding: 10px 14px;
-  background: rgba(126, 200, 227, 0.1);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius);
+  width: 100%;
+  padding: 24px;
+  background: rgba(126, 200, 227, 0.06);
+  border: 1.5px solid rgba(126, 200, 227, 0.25);
+  border-radius: var(--radius-lg);
   color: var(--ice-400);
-  font-family: 'Source Sans 3', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 600;
   cursor: pointer;
-  white-space: nowrap;
   transition: all 0.15s ease;
   -webkit-tap-highlight-color: transparent;
+  margin-bottom: 0;
 }
 
-.detect-btn:active {
-  transform: scale(0.97);
+.detect-btn-hero:active {
+  transform: scale(0.98);
 }
 
-.detect-btn.detecting {
+.detect-btn-hero .detect-icon {
+  width: 32px;
+  height: 32px;
+  transition: transform 0.15s;
+}
+
+.detect-btn-hero .detect-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ice-400);
+}
+
+.detect-btn-hero .detect-subtitle {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+/* Detecting state — spinner + disabled */
+.detect-btn-hero.detecting {
   pointer-events: none;
   opacity: 0.7;
 }
 
-.detect-btn.detecting .detect-icon {
+.detect-btn-hero.detecting .detect-icon {
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Divider — "or enter address manually" */
+.location-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.location-divider::before,
+.location-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* === Location states === */
+
+/* Confirmed: hide detect + divider + hint, green tint on address */
+.location-section.state-confirmed .detect-btn-hero,
+.location-section.state-confirmed .location-divider,
+.location-section.state-confirmed .location-hint {
+  display: none;
+}
+
+.location-section.state-confirmed .text-input {
+  border-color: rgba(52, 211, 153, 0.35);
+  background: rgba(52, 211, 153, 0.06);
+}
+
+/* Detect failed: compact detect button, hide divider */
+.location-section.state-detect-failed .detect-btn-hero {
+  flex-direction: row;
+  padding: 10px 14px;
+  gap: 8px;
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+}
+
+.location-section.state-detect-failed .detect-btn-hero .detect-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.location-section.state-detect-failed .detect-btn-hero .detect-label {
+  font-size: 0.85rem;
+}
+
+.location-section.state-detect-failed .detect-btn-hero .detect-subtitle {
+  display: none;
+}
+
+.location-section.state-detect-failed .location-divider {
+  display: none;
+}
+
+.location-section .text-input {
+  width: 100%;
 }
 
 .text-input {
