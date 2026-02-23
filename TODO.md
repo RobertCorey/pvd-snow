@@ -1,6 +1,25 @@
 # PVD Snow — Launch TODO
 
-## Monday (storm day)
+## Storm timeline (Feb 22-24, 2026)
+
+- **Sun night → Mon**: 9-13" overnight, another 10-14" Monday. Gusts to 55mph. Blizzard.
+- **Mon evening (~7pm)**: Snow stops. Plows start working.
+- **Tue**: Sunny, 32°F. People dig out, walk around, see the mess.
+- **Tue night**: Possible light dusting, not significant.
+
+Total: ~20-27 inches. This is the kind of storm where sidewalks won't be
+shoveled for days and side streets won't get plowed for a while.
+
+## Timing strategy
+
+- **Monday**: Stay inside. Do all technical prep (domain, branding, e2e test,
+  dry runs). Nobody is reporting snow during a blizzard.
+- **Monday evening**: Final checks once snow stops. Everything ready to go.
+- **Tuesday morning**: Launch. Post to Reddit/social media early. People wake
+  up, try to walk somewhere, find sidewalks buried, and that's when they
+  want to report it. The frustration window is Tuesday AM through Wednesday.
+
+## Monday (storm day / prep)
 
 ### Domain
 - [ ] Verify pvdsnow.org DNS is resolving (A record + TXT)
