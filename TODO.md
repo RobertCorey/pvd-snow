@@ -2,15 +2,15 @@
 
 ## End-to-end real test
 
-- [ ] Open pvdsnow.org on phone
-- [ ] Take a real photo of an unshoveled sidewalk
-- [ ] Confirm EXIF GPS is extracted and address auto-populates (now via ArcGIS)
-- [ ] Submit the report
-- [ ] Open dashboard (localhost:3311), see the report appear
-- [ ] Dry run it first, watch Playwright walk through the portal
-- [ ] Submit it for real, confirm case ID comes back
-- [ ] Check 311.providenceri.gov/my-requests/ to verify the case
-- [ ] Test with real photos: does phone EXIF GPS give accurate enough coords
+- [x] Open pvdsnow.org on phone
+- [x] Take a real photo of an unshoveled sidewalk
+- [x] Confirm EXIF GPS is extracted and address auto-populates (now via ArcGIS)
+- [x] Submit the report
+- [x] Open dashboard (localhost:3311), see the report appear
+- [x] Dry run it first, watch Playwright walk through the portal
+- [x] Submit it for real, confirm case ID comes back
+- [x] Check 311.providenceri.gov/my-requests/ to verify the case
+- [x] Test with real photos: does phone EXIF GPS give accurate enough coords
       for a good ArcGIS match?
 
 ## Marketing
@@ -29,6 +29,10 @@ the storm. The frustration window is Tuesday AM through Wednesday.
 **Flyer (stretch goal):**
 - [ ] Simple one-pager: QR code + pvdsnow.org + one-line pitch
 - [ ] Post at bus stops, coffee shops, laundromats in affected neighborhoods
+
+## Analytics
+
+- [ ] Set up Microsoft Clarity for session recording & heatmaps (free, unlimited)
 
 ## Monitor (ongoing)
 

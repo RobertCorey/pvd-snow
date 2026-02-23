@@ -8,11 +8,16 @@ const firebaseConfig = {
   projectId: "pvd-snow-report",
   storageBucket: "pvd-snow-report.firebasestorage.app",
   messagingSenderId: "224841506687",
-  appId: "1:224841506687:web:1626643194b097db79844a"
+  appId: "1:224841506687:web:1626643194b097db79844a",
+  measurementId: "G-KKLML5QH3L"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const analytics = firebase.analytics();
+function logEvent(name, params) {
+  try { analytics.logEvent(name, params); } catch(e) {}
+}
 
 const CATEGORY_LABELS = {
   unshoveled_sidewalk: 'Unshoveled Sidewalk',
@@ -80,6 +85,7 @@ function setLocationState(state) {
 
 // --- Step navigation ---
 function goToStep(n) {
+  logEvent('wizard_step', { step: n });
   currentStep = n;
   steps.forEach((s, i) => s.classList.toggle('active', i === n));
   progressSteps.forEach((s, i) => {
@@ -153,6 +159,7 @@ categoryBtns.addEventListener('click', (e) => {
   categoryBtns.querySelectorAll('.category-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
   selectedCategory = btn.dataset.category;
+  logEvent('select_category', { category: selectedCategory });
   validateStep();
 
   // Auto-advance after brief delay
@@ -174,6 +181,7 @@ photoInput.addEventListener('change', async (e) => {
   photoDataUrl = dataUrl;
   previewImg.src = dataUrl;
   photoCaptureBtn.classList.add('has-photo');
+  logEvent('photo_captured', { has_exif_gps: !!exifGps });
 
   // #4: Show EXIF status on the photo step
   if (exifGps) {
@@ -380,6 +388,7 @@ detectBtn.addEventListener('click', () => {
       latLngEl.textContent = `${currentLat.toFixed(5)}, ${currentLng.toFixed(5)}`;
       detectBtn.classList.remove('detecting');
       locationStatus.textContent = 'Location detected from GPS.';
+      logEvent('location_detected', { method: 'gps' });
       setLocationState('confirmed');
       reverseGeocode(currentLat, currentLng);
     },
@@ -442,10 +451,12 @@ async function submitReport() {
     confirmCategory.textContent = CATEGORY_LABELS[selectedCategory] || selectedCategory;
     confirmAddress.textContent = addressInput.value.trim();
     confirmation.classList.add('visible');
+    logEvent('report_submitted', { category: selectedCategory });
 
   } catch (err) {
     console.error('Submission failed:', err);
     overlay.classList.remove('visible');
+    logEvent('submit_error', { error: err.message || String(err) });
     showError('Submission failed. Please check your connection and try again.');
   }
 }
@@ -463,10 +474,12 @@ shareNativeBtn.addEventListener('click', () => {
     ? 'an unshoveled sidewalk'
     : 'an unplowed street';
   const shareText = `I just reported ${issueLabel} in Providence using pvdsnow.org \u2014 takes 30 seconds from your phone.`;
+  logEvent('share_click', { method: 'native' });
   navigator.share({ text: shareText, url: 'https://pvdsnow.org' }).catch(() => {});
 });
 
 shareCopyBtn.addEventListener('click', () => {
+  logEvent('share_click', { method: 'copy_link' });
   navigator.clipboard.writeText('https://pvdsnow.org').then(() => {
     shareCopyBtn.textContent = 'Copied!';
     setTimeout(() => {
