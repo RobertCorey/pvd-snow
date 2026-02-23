@@ -216,38 +216,38 @@ body::before {
 
 .step-heading {
   font-family: 'Outfit', sans-serif;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--white-pure);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .step-desc {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--text-secondary);
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 /* === CATEGORY BUTTONS === */
 .category-grid {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 10px;
+  margin-top: 20px;
 }
 
 .category-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
-  padding: 16px;
+  padding: 20px;
   background: var(--navy-800);
   border: 1.5px solid var(--border);
   border-radius: var(--radius);
   color: var(--text-primary);
   font-family: 'Source Sans 3', sans-serif;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -260,14 +260,14 @@ body::before {
 }
 
 .category-btn .cat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   background: rgba(126, 200, 227, 0.06);
   transition: background 0.15s ease;
 }
@@ -314,7 +314,7 @@ body::before {
 /* === PHOTO CAPTURE === */
 .photo-capture-btn {
   width: 100%;
-  padding: 48px 16px;
+  padding: 64px 16px;
   background: var(--navy-800);
   border: 1.5px dashed var(--border-focus);
   border-radius: var(--radius-lg);
@@ -331,19 +331,33 @@ body::before {
   -webkit-tap-highlight-color: transparent;
 }
 
+.photo-capture-btn .photo-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  font-size: 1rem;
+}
+
 .photo-capture-btn:active {
   transform: scale(0.98);
 }
 
 .photo-capture-btn .cam-ring {
-  width: 56px;
-  height: 56px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
   border: 2px solid var(--ice-400);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--ice-400);
+}
+
+.photo-capture-btn .cam-ring svg {
+  width: 28px;
+  height: 28px;
 }
 
 .photo-capture-btn.has-photo {
