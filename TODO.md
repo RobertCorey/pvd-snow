@@ -22,10 +22,10 @@ shoveled for days and side streets won't get plowed for a while.
 ## Monday (storm day / prep)
 
 ### Domain
-- [ ] Verify pvdsnow.org DNS is resolving (A record + TXT)
-- [ ] Verify Firebase Console shows pvdsnow.org and www.pvdsnow.org as "Connected"
-- [ ] Verify HTTPS works on both pvdsnow.org and www.pvdsnow.org
-- [ ] Test that the PWA loads and works on pvdsnow.org
+- [x] Verify pvdsnow.org DNS is resolving (A record 199.36.158.100 + TXT hosting-site=pvd-snow-report)
+- [x] Verify www.pvdsnow.org CNAME → pvd-snow-report.web.app
+- [x] Verify HTTPS works on both pvdsnow.org and www.pvdsnow.org (200, SSL valid)
+- [x] Latest deploy confirmed live (community disclaimer present in served HTML)
 
 ### Privacy / transparency with users
 Reports are submitted to the city's 311 system as PUBLIC records (the portal's
