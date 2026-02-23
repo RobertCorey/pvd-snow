@@ -16,3 +16,9 @@ automation/.env
 
 # Saved browser auth state
 .auth-state.json
+
+# Playwright MCP artifacts
+.playwright-mcp/
+
+# Misc local files
+proton-mail/
