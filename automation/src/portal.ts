@@ -258,7 +258,7 @@ export class PortalSubmitter {
     const descParts: string[] = [];
     if (report.description) descParts.push(report.description);
     if (report.lat && report.lng) {
-      descParts.push(`GPS: ${report.lat.toFixed(6)}, ${report.lng.toFixed(6)}`);
+      descParts.push(`Exact location: https://maps.google.com/?q=${report.lat.toFixed(6)},${report.lng.toFixed(6)}`);
     }
     descParts.push(`[Submitted via PVD Snow — ref:${report.id}]`);
     await page.fill('#description', descParts.join('\n\n'));
