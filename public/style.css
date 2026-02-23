@@ -132,6 +132,12 @@ body::before {
   font-style: italic;
 }
 
+.community-badge .version {
+  opacity: 0.4;
+  font-style: normal;
+  margin-left: 4px;
+}
+
 .header-line {
   width: 100%;
   height: 1px;
