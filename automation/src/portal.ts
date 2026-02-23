@@ -109,7 +109,7 @@ export class PortalSubmitter {
     await this.fillStep1(report.category);
 
     // ── Step 2: Location ──
-    await this.fillStep2(report.address);
+    await this.fillStep2(report.address, report.lat, report.lng);
 
     // ── Step 3: Details & Submit ──
     const caseId = await this.fillStep3(report, dryRun);
@@ -156,11 +156,59 @@ export class PortalSubmitter {
 
   // ── Step 2 ─────────────────────────────────────────────────
 
-  private async fillStep2(address: string): Promise<void> {
+  private async fillStep2(address: string, lat: number | null, lng: number | null): Promise<void> {
     const page = this.getPage();
 
     console.log('[portal]   Step 2: Setting location...');
     await page.waitForSelector('#addressIn', { timeout: 10_000 });
+
+    if (lat && lng) {
+      // We have exact coordinates — use ArcGIS reverse geocode to get the address
+      // in the same format the portal expects, then set all fields directly
+      const arcgisAddr = await this.arcgisReverseGeocode(lat, lng);
+
+      if (arcgisAddr) {
+        console.log(`[portal]   ArcGIS resolved: ${arcgisAddr.street}, ${arcgisAddr.city} ${arcgisAddr.zip}`);
+
+        // Set the visible address input
+        await page.fill('#addressIn', arcgisAddr.full);
+
+        // Set all hidden/structured fields directly
+        await page.evaluate((a) => {
+          const set = (id: string, val: string) => {
+            const el = document.getElementById(id) as HTMLInputElement | null;
+            if (el) el.value = val;
+          };
+          set('cop_address', JSON.stringify(a.full));
+          set('cop_street1', a.street);
+          set('cop_city', a.city);
+          set('cop_stateorprovidence', a.state);
+          set('cop_zipofpostalcode', a.zip);
+          set('cop_countryorregion', a.country);
+          set('cop_latitude', a.lat);
+          set('cop_longitude', a.lng);
+        }, arcgisAddr);
+      } else {
+        // ArcGIS failed — fall back to autocomplete
+        console.log('[portal]   ArcGIS reverse geocode failed, falling back to autocomplete');
+        await this.fillStep2Autocomplete(address);
+      }
+    } else {
+      // No coordinates — use autocomplete with the address string
+      await this.fillStep2Autocomplete(address);
+    }
+
+    // Click Next
+    await page.click('#NextButton');
+
+    // Wait for step 3
+    await page.waitForURL(/stepid/, { timeout: STEP_TIMEOUT });
+    await page.waitForSelector('#description', { timeout: 10_000 });
+    console.log('[portal]   Step 2 complete');
+  }
+
+  private async fillStep2Autocomplete(address: string): Promise<void> {
+    const page = this.getPage();
 
     // Type address character by character to trigger autocomplete
     await page.locator('#addressIn').pressSequentially(address, { delay: 50 });
@@ -170,17 +218,33 @@ export class PortalSubmitter {
 
     // Click first suggestion to populate all hidden fields
     await page.click('tr.suggestRow td.suggestData');
-    await page.waitForTimeout(1_000); // Wait for hidden fields (lat/lng/etc) to populate
+    await page.waitForTimeout(1_000);
+  }
 
-    // Click Next
-    await page.click('#NextButton');
+  private async arcgisReverseGeocode(lat: number, lng: number): Promise<{
+    full: string; street: string; city: string; state: string; zip: string; country: string; lat: string; lng: string;
+  } | null> {
+    try {
+      const url = `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?location=${lng},${lat}&featureTypes=StreetAddress,StreetName,StreetInt&f=pjson`;
+      const resp = await fetch(url);
+      const data = await resp.json();
+      if (!data.address) return null;
 
-    // Wait for step 3 — the stepid changes
-    await page.waitForURL(/stepid/, { timeout: STEP_TIMEOUT });
-
-    // Verify we actually moved to a new step by checking for #description
-    await page.waitForSelector('#description', { timeout: 10_000 });
-    console.log('[portal]   Step 2 complete');
+      const a = data.address;
+      return {
+        full: a.LongLabel || a.Match_addr || `${a.Address}, ${a.City}, ${a.RegionAbbr}, ${a.Postal}, USA`,
+        street: a.Address || a.ShortLabel || '',
+        city: a.City || 'Providence',
+        state: a.RegionAbbr || 'RI',
+        zip: a.Postal || '',
+        country: a.CountryCode || 'USA',
+        lat: String(lat),
+        lng: String(lng),
+      };
+    } catch (err) {
+      console.error('[portal]   ArcGIS reverse geocode error:', err);
+      return null;
+    }
   }
 
   // ── Step 3 ─────────────────────────────────────────────────
@@ -193,6 +257,9 @@ export class PortalSubmitter {
     // Build description text
     const descParts: string[] = [];
     if (report.description) descParts.push(report.description);
+    if (report.lat && report.lng) {
+      descParts.push(`GPS: ${report.lat.toFixed(6)}, ${report.lng.toFixed(6)}`);
+    }
     descParts.push(`[Submitted via PVD Snow — ref:${report.id}]`);
     await page.fill('#description', descParts.join('\n\n'));
 

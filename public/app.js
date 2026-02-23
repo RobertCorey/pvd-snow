@@ -326,18 +326,16 @@ function dmsToDecimal([d, m, s]) {
   return d + m / 60 + s / 3600;
 }
 
-// --- Reverse geocoding ---
+// --- Reverse geocoding (ArcGIS — matches the city's 311 portal geocoder) ---
 async function reverseGeocode(lat, lng) {
   try {
     const resp = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
-      { headers: { 'Accept': 'application/json' } }
+      `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?location=${lng},${lat}&featureTypes=StreetAddress,StreetName,StreetInt&f=pjson`
     );
     const data = await resp.json();
-    if (data.display_name) {
-      const a = data.address || {};
-      const parts = [a.house_number, a.road, a.city || a.town || a.village].filter(Boolean);
-      addressInput.value = parts.length > 0 ? parts.join(' ') : data.display_name.split(',').slice(0, 3).join(',');
+    if (data.address) {
+      const a = data.address;
+      addressInput.value = a.Address || a.ShortLabel || a.Match_addr || '';
       validateStep();
     }
   } catch (err) {

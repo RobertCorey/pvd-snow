@@ -35,8 +35,8 @@ and act on them). Users need to know this before they submit:
       will be submitted as a public record to the City of Providence 311 system"
 - [x] Do NOT collect name/email by default — keep the contact fields collapsed
       and clearly labeled as optional (verified: already the case)
-- [ ] Verify the portal's privacy toggle stays set to "No" (public) during
-      automation — currently we don't touch it, which leaves the default (public)
+- [x] Verify the portal's privacy toggle stays set to "No" (public) during
+      automation — confirmed: default is No, automation doesn't touch it
 
 ### Branding — NOT an official city app
 - [x] Add a visible disclaimer: "Community project — not affiliated with the City of Providence"
@@ -60,17 +60,18 @@ and act on them). Users need to know this before they submit:
 - [ ] Check 311.providenceri.gov/my-requests/ to verify the case
 
 ### Location accuracy
-The city needs a good address to dispatch crews. Current flow:
-1. Photo EXIF GPS → lat/lng → reverse geocode via Nominatim → street address
-2. Automation types that address into the portal's ArcGIS autocomplete
+The city needs a good address to dispatch crews. Updated flow:
+1. Photo EXIF GPS → exact lat/lng
+2. ArcGIS reverse geocode (same geocoder the portal uses) → street address
+3. User confirms address in the app
+4. Automation sets portal hidden fields directly (cop_latitude, cop_longitude,
+   cop_street1, cop_city, etc.) — no autocomplete guessing
 
-Potential improvements:
-- [ ] The portal requires ArcGIS autocomplete flow (direct field injection causes
-      500 errors per research). But we should verify: does the ArcGIS suggestion
-      match what we reverse-geocoded? If not, the city gets a different address
-      than what the user confirmed.
-- [ ] Consider passing lat/lng in the description field as a fallback so the city
-      has exact coordinates even if the address is approximate.
+- [x] Replaced Nominatim with ArcGIS reverse geocode in PWA — address format
+      now matches what the portal expects
+- [x] Automation sets portal hidden fields directly instead of typing into
+      autocomplete and hoping the first suggestion matches
+- [x] Exact GPS coordinates included in description field as fallback
 - [ ] Test with real photos: does phone EXIF GPS give us accurate enough coords
       for a good ArcGIS match?
 
