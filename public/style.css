@@ -948,6 +948,55 @@ textarea.text-input {
   text-align: right;
 }
 
+/* === SHARE SECTION === */
+.share-section {
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 20px;
+}
+
+.share-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.share-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.share-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: var(--navy-700);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.share-btn:active {
+  transform: scale(0.97);
+}
+
+.share-btn svg {
+  flex-shrink: 0;
+}
+
 .confirmation .another-btn {
   padding: 14px 32px;
   background: var(--navy-700);

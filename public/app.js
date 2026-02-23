@@ -450,6 +450,31 @@ async function submitReport() {
   }
 }
 
+// --- Share buttons ---
+const shareNativeBtn = document.getElementById('shareNative');
+const shareCopyBtn = document.getElementById('shareCopy');
+
+if (!navigator.share) {
+  shareNativeBtn.style.display = 'none';
+}
+
+shareNativeBtn.addEventListener('click', () => {
+  const issueLabel = selectedCategory === 'unshoveled_sidewalk'
+    ? 'an unshoveled sidewalk'
+    : 'an unplowed street';
+  const shareText = `I just reported ${issueLabel} in Providence using pvdsnow.org \u2014 takes 30 seconds from your phone.`;
+  navigator.share({ text: shareText, url: 'https://pvdsnow.org' }).catch(() => {});
+});
+
+shareCopyBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText('https://pvdsnow.org').then(() => {
+    shareCopyBtn.textContent = 'Copied!';
+    setTimeout(() => {
+      shareCopyBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg> Copy link';
+    }, 2000);
+  });
+});
+
 // --- Submit another ---
 submitAnother.addEventListener('click', () => {
   selectedCategory = null;
@@ -477,6 +502,7 @@ submitAnother.addEventListener('click', () => {
   document.getElementById('wizardNav').style.display = '';
   document.getElementById('progressBar').style.display = '';
   confirmation.classList.remove('visible');
+  shareCopyBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg> Copy link';
 
   goToStep(0);
 });

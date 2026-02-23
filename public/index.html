@@ -7,7 +7,7 @@
   <title>PVD Snow</title>
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/icons/icon-192.svg">
-  <link rel="stylesheet" href="/style.css?v=4">
+  <link rel="stylesheet" href="/style.css?v=5">
 </head>
 <body>
   <div class="app-container">
@@ -27,7 +27,7 @@
         PVD Snow
       </h1>
       <p class="app-subtitle">Report unplowed streets &amp; unshoveled sidewalks in Providence</p>
-      <p class="community-badge">Community project &mdash; not affiliated with the City of Providence <span class="version">v7</span></p>
+      <p class="community-badge">Community project &mdash; not affiliated with the City of Providence <span class="version">v8</span></p>
       <div class="header-line"></div>
     </header>
 
@@ -196,6 +196,26 @@
         <div class="confirm-summary-row"><span class="confirm-label">Issue</span> <span id="confirmCategory"></span></div>
         <div class="confirm-summary-row"><span class="confirm-label">Location</span> <span id="confirmAddress"></span></div>
       </div>
+      <div class="share-section">
+        <p class="share-label">Spread the word</p>
+        <div class="share-buttons">
+          <button type="button" class="share-btn" id="shareNative">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/>
+              <polyline points="16,6 12,2 8,6"/>
+              <line x1="12" y1="2" x2="12" y2="15"/>
+            </svg>
+            Share
+          </button>
+          <button type="button" class="share-btn" id="shareCopy">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+            </svg>
+            Copy link
+          </button>
+        </div>
+      </div>
       <button type="button" class="another-btn" id="submitAnother">Submit Another Report</button>
     </div>
 
@@ -214,7 +234,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
   <!-- App -->
-  <script src="/app.js?v=4"></script>
+  <script src="/app.js?v=5"></script>
 
   <!-- Service Worker -->
   <script>
