@@ -31,22 +31,23 @@ shoveled for days and side streets won't get plowed for a while.
 Reports are submitted to the city's 311 system as PUBLIC records (the portal's
 "Private" toggle defaults to No, and we leave it that way so the city can share
 and act on them). Users need to know this before they submit:
-- [ ] Add clear notice in the app: "Your report (photo, location, description)
+- [x] Add clear notice in the app: "Your report (photo, location, description)
       will be submitted as a public record to the City of Providence 311 system"
-- [ ] Do NOT collect name/email by default — keep the contact fields collapsed
-      and clearly labeled as optional (already the case, just verify)
+- [x] Do NOT collect name/email by default — keep the contact fields collapsed
+      and clearly labeled as optional (verified: already the case)
 - [ ] Verify the portal's privacy toggle stays set to "No" (public) during
       automation — currently we don't touch it, which leaves the default (public)
 
 ### Branding — NOT an official city app
-The current design (dark blue, snowflake, "Snow Emergency Active" badge) could
-read as an official City of Providence app. We need to make it unmistakably clear
-this is a community/volunteer project:
-- [ ] Add a visible disclaimer: "This is a community project, not affiliated with the City of Providence"
-- [ ] Consider softer/friendlier design language vs. the official-government look
-- [ ] Add an "About" or "How it works" section explaining: you submit here, we
-      forward to the city's 311 system on your behalf
-- [ ] Footer should link to the real 311 portal for people who want to use it directly
+- [x] Add a visible disclaimer: "Community project — not affiliated with the City of Providence"
+- [x] Remove "Snow Emergency Active" badge (too official-looking)
+- [x] Add "How it works" in footer explaining: you submit here, we forward
+      to the city's 311 system on your behalf
+- [x] Footer links to the real 311 portal for people who want to use it directly
+
+### Service worker
+- [x] Replaced cache-first SW with no-op that clears old caches (app is too
+      small and too network-dependent to benefit from offline caching)
 
 ### End-to-end real test
 - [ ] Open pvdsnow.org on phone
