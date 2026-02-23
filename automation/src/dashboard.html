@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PVD311 Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0c1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #7d8590;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --red: #f85149;
+      --blue: #58a6ff;
+      --radius: 8px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .shell {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    header h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .status-pill {
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .status-pill.busy {
+      background: rgba(210, 153, 34, 0.15);
+      border-color: var(--yellow);
+      color: var(--yellow);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+    .tab {
+      padding: 6px 14px;
+      font-size: 13px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active {
+      background: var(--surface);
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .tab .count {
+      display: inline-block;
+      min-width: 18px;
+      text-align: center;
+      padding: 0 5px;
+      margin-left: 4px;
+      font-size: 11px;
+      background: var(--border);
+      border-radius: 10px;
+    }
+
+    .report-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .report-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .report-row:hover { background: #1c2129; }
+
+    .report-info {
+      min-width: 0;
+    }
+    .report-title {
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .report-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+    .badge.pending    { background: rgba(88,166,255,0.15); color: var(--blue); }
+    .badge.processing { background: rgba(210,153,34,0.15); color: var(--yellow); }
+    .badge.submitted  { background: rgba(63,185,80,0.15);  color: var(--green); }
+    .badge.failed     { background: rgba(248,81,73,0.15);  color: var(--red); }
+
+    .actions { display: flex; gap: 6px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover { background: #262c34; border-color: #484f58; }
+    .btn:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+    .btn.primary {
+      background: rgba(88,166,255,0.15);
+      border-color: rgba(88,166,255,0.4);
+      color: var(--accent);
+    }
+    .btn.primary:hover { background: rgba(88,166,255,0.25); }
+    .btn.danger {
+      color: var(--red);
+      border-color: rgba(248,81,73,0.3);
+    }
+    .btn.danger:hover { background: rgba(248,81,73,0.1); }
+
+    .empty {
+      text-align: center;
+      padding: 48px 16px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* ── Detail panel ── */
+    .detail-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 100;
+    }
+    .detail-overlay.open { display: block; }
+
+    .detail-panel {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: min(480px, 100vw);
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      z-index: 101;
+      overflow-y: auto;
+      transform: translateX(100%);
+      transition: transform 0.2s ease;
+    }
+    .detail-overlay.open .detail-panel { transform: translateX(0); }
+
+    .detail-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+    }
+    .detail-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .detail-close:hover { background: var(--border); color: var(--text); }
+
+    .detail-body { padding: 20px; }
+
+    .detail-field {
+      margin-bottom: 16px;
+    }
+    .detail-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .detail-field .val {
+      font-size: 14px;
+    }
+
+    .detail-photo {
+      width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .detail-actions {
+      display: flex;
+      gap: 8px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      position: sticky;
+      bottom: 0;
+      background: var(--surface);
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      padding: 8px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      z-index: 200;
+      transition: transform 0.2s ease;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <h1>PVD311 Dashboard</h1>
+      <span class="status-pill" id="serverStatus">Idle</span>
+    </header>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-filter="all">All</button>
+      <button class="tab" data-filter="pending">Pending <span class="count" id="countPending">0</span></button>
+      <button class="tab" data-filter="processing">Processing <span class="count" id="countProcessing">0</span></button>
+      <button class="tab" data-filter="submitted">Submitted <span class="count" id="countSubmitted">0</span></button>
+      <button class="tab" data-filter="failed">Failed <span class="count" id="countFailed">0</span></button>
+    </div>
+
+    <div id="reportList"></div>
+  </div>
+
+  <!-- Detail slide-over -->
+  <div class="detail-overlay" id="detailOverlay">
+    <div class="detail-panel" id="detailPanel">
+      <div class="detail-header">
+        <span style="font-weight:600; font-size:15px;">Report Detail</span>
+        <button class="detail-close" id="detailClose">&times;</button>
+      </div>
+      <div class="detail-body" id="detailBody"></div>
+      <div class="detail-actions" id="detailActions"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let reports = [];
+    let currentFilter = 'all';
+    let pollTimer = null;
+
+    const $ = (sel) => document.querySelector(sel);
+
+    // ── API helpers ──
+    async function api(method, path, body) {
+      const opts = { method, headers: {} };
+      if (body) {
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(body);
+      }
+      const res = await fetch(path, opts);
+      return res.json();
+    }
+
+    function toast(msg) {
+      const el = $('#toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    // ── Rendering ──
+    function formatTime(ts) {
+      if (!ts) return '—';
+      const d = new Date(ts._seconds ? ts._seconds * 1000 : ts);
+      return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }
+
+    function categoryLabel(cat) {
+      const map = {
+        unshoveled_sidewalk: 'Unshoveled Sidewalk',
+        missed_plowing: 'Missed Street Plowing',
+      };
+      return map[cat] || cat;
+    }
+
+    function renderList() {
+      const filtered = currentFilter === 'all'
+        ? reports
+        : reports.filter(r => r.status === currentFilter);
+
+      // Update counts
+      for (const s of ['pending', 'processing', 'submitted', 'failed']) {
+        const el = $(`#count${s[0].toUpperCase() + s.slice(1)}`);
+        if (el) el.textContent = reports.filter(r => r.status === s).length;
+      }
+
+      const container = $('#reportList');
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty">No reports found</div>';
+        return;
+      }
+
+      container.innerHTML = '<div class="report-list">' + filtered.map(r => `
+        <div class="report-row" data-id="${r.id}">
+          <div class="report-info">
+            <div class="report-title">${categoryLabel(r.category)} — ${r.address || 'No address'}</div>
+            <div class="report-meta">
+              ${formatTime(r.timestamp)}
+              ${r.portalCaseId ? ' · ' + r.portalCaseId : ''}
+              ${r.statusDetail && r.status === 'failed' ? ' · ' + r.statusDetail : ''}
+            </div>
+          </div>
+          <span class="badge ${r.status}">${r.status}</span>
+          <div class="actions">
+            ${r.status === 'pending' ? `<button class="btn" onclick="event.stopPropagation(); submitReport('${r.id}', true)">Dry Run</button><button class="btn primary" onclick="event.stopPropagation(); submitReport('${r.id}')">Submit to 311</button>` : ''}
+            ${r.status === 'failed' ? `<button class="btn danger" onclick="event.stopPropagation(); resetReport('${r.id}')">Reset</button>` : ''}
+          </div>
+        </div>
+      `).join('') + '</div>';
+
+      container.querySelectorAll('.report-row').forEach(row => {
+        row.addEventListener('click', () => openDetail(row.dataset.id));
+      });
+    }
+
+    // ── Detail panel ──
+    async function openDetail(id) {
+      const overlay = $('#detailOverlay');
+      const body = $('#detailBody');
+      const actions = $('#detailActions');
+
+      body.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted)"><div class="spinner"></div></div>';
+      actions.innerHTML = '';
+      overlay.classList.add('open');
+
+      const r = await api('GET', `/api/reports/${id}`);
+
+      body.innerHTML = `
+        <div class="detail-field">
+          <label>Status</label>
+          <div class="val"><span class="badge ${r.status}">${r.status}</span></div>
+        </div>
+        ${r.statusDetail ? `<div class="detail-field"><label>Status Detail</label><div class="val">${r.statusDetail}</div></div>` : ''}
+        ${r.portalCaseId ? `<div class="detail-field"><label>311 Case ID</label><div class="val">${r.portalCaseId}</div></div>` : ''}
+        <div class="detail-field">
+          <label>Category</label>
+          <div class="val">${categoryLabel(r.category)}</div>
+        </div>
+        <div class="detail-field">
+          <label>Address</label>
+          <div class="val">${r.address || '—'}</div>
+        </div>
+        <div class="detail-field">
+          <label>Coordinates</label>
+          <div class="val">${r.lat != null ? `${r.lat}, ${r.lng}` : '—'}</div>
+        </div>
+        <div class="detail-field">
+          <label>Description</label>
+          <div class="val">${r.description || '—'}</div>
+        </div>
+        <div class="detail-field">
+          <label>Reporter</label>
+          <div class="val">${[r.reporterName, r.reporterEmail].filter(Boolean).join(' · ') || '—'}</div>
+        </div>
+        <div class="detail-field">
+          <label>Submitted</label>
+          <div class="val">${formatTime(r.timestamp)}</div>
+        </div>
+        ${r.photo ? `<div class="detail-field"><label>Photo</label><img class="detail-photo" src="${r.photo}"></div>` : ''}
+      `;
+
+      const btns = [];
+      if (r.status === 'pending') {
+        btns.push(`<button class="btn" onclick="submitReport('${r.id}', true); closeDetail();">Dry Run</button>`);
+        btns.push(`<button class="btn primary" onclick="submitReport('${r.id}'); closeDetail();">Submit to 311</button>`);
+      }
+      if (r.status === 'failed' || r.status === 'submitted') {
+        btns.push(`<button class="btn" onclick="resetReport('${r.id}'); closeDetail();">Reset to Pending</button>`);
+      }
+      actions.innerHTML = btns.join('');
+    }
+
+    function closeDetail() {
+      $('#detailOverlay').classList.remove('open');
+    }
+
+    $('#detailClose').addEventListener('click', closeDetail);
+    $('#detailOverlay').addEventListener('click', (e) => {
+      if (e.target === $('#detailOverlay')) closeDetail();
+    });
+
+    // ── Actions ──
+    async function submitReport(id, dryRun = false) {
+      toast(dryRun ? 'Starting dry run...' : 'Starting submission...');
+      await api('POST', '/api/submit', { id, dryRun });
+      startPolling();
+    }
+
+    async function resetReport(id) {
+      await api('POST', '/api/reset', { id });
+      toast('Report reset to pending');
+      await refresh();
+    }
+
+    // ── Data loading ──
+    async function refresh() {
+      reports = await api('GET', '/api/reports');
+      renderList();
+
+      const status = await api('GET', '/api/status');
+      const pill = $('#serverStatus');
+      if (status.activeSubmission) {
+        pill.textContent = 'Submitting...';
+        pill.classList.add('busy');
+      } else {
+        pill.textContent = 'Idle';
+        pill.classList.remove('busy');
+      }
+    }
+
+    function startPolling() {
+      if (pollTimer) return;
+      pollTimer = setInterval(async () => {
+        await refresh();
+        const status = await api('GET', '/api/status');
+        if (!status.activeSubmission) {
+          clearInterval(pollTimer);
+          pollTimer = null;
+          toast('Submission complete');
+        }
+      }, 2000);
+    }
+
+    // ── Tabs ──
+    $('#tabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.tab');
+      if (!tab) return;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentFilter = tab.dataset.filter;
+      renderList();
+    });
+
+    // ── Init ──
+    refresh();
+    // Light background poll to pick up new reports
+    setInterval(refresh, 15000);
+  </script>
+</body>
+</html>

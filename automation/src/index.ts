@@ -1,0 +1,163 @@
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { initFirestore, fetchAllReports, fetchReport, updateReportStatus } from './firestore.js';
+import { PortalSubmitter } from './portal.js';
+import { config } from './config.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Track active submission so we don't double-submit
+let activeSubmission: string | null = null;
+
+function json(res: ServerResponse, status: number, data: unknown): void {
+  res.writeHead(status, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(data));
+}
+
+async function readBody(req: IncomingMessage): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) chunks.push(chunk as Buffer);
+  return Buffer.concat(chunks).toString();
+}
+
+async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  const url = new URL(req.url || '/', `http://localhost`);
+
+  // ── Dashboard HTML ──
+  if (req.method === 'GET' && url.pathname === '/') {
+    // Resolve path: in dev the compiled JS is at dist/automation/src/index.js,
+    // dashboard.html is at automation/src/dashboard.html (source).
+    // We ship dashboard.html alongside compiled output via a copy, but simpler:
+    // just resolve relative to the *source* tree.
+    const htmlPaths = [
+      join(__dirname, 'dashboard.html'),                    // next to compiled JS
+      join(__dirname, '..', '..', '..', 'automation', 'src', 'dashboard.html'), // from dist/automation/src -> automation/src
+    ];
+    let html = '';
+    for (const p of htmlPaths) {
+      try { html = readFileSync(p, 'utf-8'); break; } catch { /* try next */ }
+    }
+    if (!html) {
+      res.writeHead(500); res.end('dashboard.html not found'); return;
+    }
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(html);
+    return;
+  }
+
+  // ── API: list all reports ──
+  if (req.method === 'GET' && url.pathname === '/api/reports') {
+    const reports = await fetchAllReports();
+    // Strip photo data from listing (too large), send a flag instead
+    const lite = reports.map(({ photo, ...rest }) => ({ ...rest, hasPhoto: !!photo }));
+    json(res, 200, lite);
+    return;
+  }
+
+  // ── API: get single report (includes photo) ──
+  if (req.method === 'GET' && url.pathname.startsWith('/api/reports/')) {
+    const id = url.pathname.split('/')[3];
+    const report = await fetchReport(id);
+    if (!report) { json(res, 404, { error: 'Not found' }); return; }
+    json(res, 200, report);
+    return;
+  }
+
+  // ── API: submit a report to 311 ──
+  if (req.method === 'POST' && url.pathname === '/api/submit') {
+    const body = JSON.parse(await readBody(req)) as { id: string; dryRun?: boolean };
+    if (!body.id) { json(res, 400, { error: 'Missing report id' }); return; }
+
+    if (activeSubmission) {
+      json(res, 409, { error: `Already submitting report ${activeSubmission}` });
+      return;
+    }
+
+    const report = await fetchReport(body.id);
+    if (!report) { json(res, 404, { error: 'Report not found' }); return; }
+
+    const dryRun = !!body.dryRun;
+
+    // Kick off submission in background, return immediately
+    activeSubmission = body.id;
+    json(res, 202, { status: 'started', id: body.id, dryRun });
+
+    // Run async — don't await
+    submitInBackground(report, dryRun).finally(() => { activeSubmission = null; });
+    return;
+  }
+
+  // ── API: reset a failed/submitted report back to pending ──
+  if (req.method === 'POST' && url.pathname === '/api/reset') {
+    const body = JSON.parse(await readBody(req)) as { id: string };
+    if (!body.id) { json(res, 400, { error: 'Missing report id' }); return; }
+    await updateReportStatus(body.id, 'pending', 'Reset from dashboard');
+    json(res, 200, { status: 'reset', id: body.id });
+    return;
+  }
+
+  // ── API: check if a submission is active ──
+  if (req.method === 'GET' && url.pathname === '/api/status') {
+    json(res, 200, { activeSubmission });
+    return;
+  }
+
+  json(res, 404, { error: 'Not found' });
+}
+
+async function submitInBackground(report: ReturnType<typeof fetchReport> extends Promise<infer T> ? NonNullable<T> : never, dryRun: boolean): Promise<void> {
+  const portal = new PortalSubmitter();
+  const mode = dryRun ? 'dry-run' : 'live';
+  try {
+    await updateReportStatus(report.id, 'processing', `Automation started (${mode})`);
+    await portal.launch();
+    const result = await portal.submitReport(report, dryRun);
+
+    if (dryRun) {
+      // Return to pending — nothing was actually submitted
+      await updateReportStatus(report.id, 'pending', 'Dry run completed successfully');
+      console.log(`[submit] Report ${report.id} dry run completed`);
+    } else {
+      await updateReportStatus(
+        report.id,
+        'submitted',
+        result.caseId ? `Submitted as ${result.caseId}` : 'Submitted successfully',
+        result.caseId
+      );
+      console.log(`[submit] Report ${report.id} submitted successfully`);
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[submit] Report ${report.id} failed:`, message);
+    await updateReportStatus(report.id, 'failed', `${mode}: ${message}`).catch((e) =>
+      console.error('[submit] Failed to update status:', e)
+    );
+  } finally {
+    await portal.close();
+  }
+}
+
+async function main(): Promise<void> {
+  console.log('[main] PVD311 Dashboard starting...');
+  initFirestore();
+
+  const server = createServer(async (req, res) => {
+    try {
+      await handleRequest(req, res);
+    } catch (err) {
+      console.error('[server] Request error:', err);
+      if (!res.headersSent) json(res, 500, { error: 'Internal server error' });
+    }
+  });
+
+  server.listen(config.port, () => {
+    console.log(`[main] Dashboard running at http://localhost:${config.port}`);
+  });
+}
+
+main().catch((err) => {
+  console.error('[main] Fatal error:', err);
+  process.exit(1);
+});

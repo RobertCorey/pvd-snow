@@ -1,0 +1,18 @@
+node_modules/
+.firebase/
+*.log
+.firebaserc
+
+# Automation build output
+automation/dist/
+
+# Firebase service account key (NEVER commit)
+*.json.key
+service-account*.json
+
+# Environment files with secrets
+.env
+automation/.env
+
+# Saved browser auth state
+.auth-state.json
