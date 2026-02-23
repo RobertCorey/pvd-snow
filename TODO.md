@@ -30,6 +30,14 @@ the storm. The frustration window is Tuesday AM through Wednesday.
 - [ ] Simple one-pager: QR code + pvdsnow.org + one-line pitch
 - [ ] Post at bus stops, coffee shops, laundromats in affected neighborhoods
 
+## Tuesday (Feb 24)
+
+- [ ] Check GA4 Realtime — confirm events are flowing (select_category, wizard_step, report_submitted, share_click)
+- [ ] Deploy latest build (analytics commit) if not already live
+- [ ] Do a test walkthrough on phone, verify events in GA4 DebugView
+- [ ] Replace `measurementId` placeholder if you haven't already (it's set to G-KKLML5QH3L)
+- [ ] Post to Reddit r/providence — storm frustration window is Tue AM–Wed
+
 ## Analytics
 
 - [ ] Set up Microsoft Clarity for session recording & heatmaps (free, unlimited)
