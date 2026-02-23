@@ -8,6 +8,17 @@
 - [ ] Verify HTTPS works on both pvdsnow.org and www.pvdsnow.org
 - [ ] Test that the PWA loads and works on pvdsnow.org
 
+### Privacy / transparency with users
+Reports are submitted to the city's 311 system as PUBLIC records (the portal's
+"Private" toggle defaults to No, and we leave it that way so the city can share
+and act on them). Users need to know this before they submit:
+- [ ] Add clear notice in the app: "Your report (photo, location, description)
+      will be submitted as a public record to the City of Providence 311 system"
+- [ ] Do NOT collect name/email by default — keep the contact fields collapsed
+      and clearly labeled as optional (already the case, just verify)
+- [ ] Verify the portal's privacy toggle stays set to "No" (public) during
+      automation — currently we don't touch it, which leaves the default (public)
+
 ### Branding — NOT an official city app
 The current design (dark blue, snowflake, "Snow Emergency Active" badge) could
 read as an official City of Providence app. We need to make it unmistakably clear
