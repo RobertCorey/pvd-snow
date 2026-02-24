@@ -12,9 +12,9 @@ service cloud.firestore {
                     && request.resource.data.address is string
                     && request.resource.data.address.size() > 0
                     && request.resource.data.address.size() < 500
-                    && (request.resource.data.photo is string || request.resource.data.photo == null)
-                    && (request.resource.data.description is string || request.resource.data.description == null)
-                    && request.resource.size < 10 * 1024;
+                    && (request.resource.data.photo == null || (request.resource.data.photo is string && request.resource.data.photo.size() < 1024))
+                    && (request.resource.data.description == null || (request.resource.data.description is string && request.resource.data.description.size() < 2000))
+                    && request.resource.data.keys().size() <= 13;
 
       // No client reads/updates/deletes — automation uses Admin SDK
       allow read, update, delete: if false;
