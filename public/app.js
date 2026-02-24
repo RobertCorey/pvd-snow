@@ -14,6 +14,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const storage = firebase.storage();
 const analytics = firebase.analytics();
 function logEvent(name, params) {
   try { analytics.logEvent(name, params); } catch(e) {}
@@ -420,12 +421,27 @@ function showError(msg) {
   errorBanner.classList.add('visible');
 }
 
+// --- Photo upload to Cloud Storage ---
+async function uploadPhoto(dataUrl) {
+  const timestamp = Date.now();
+  const randomId = Math.random().toString(36).substring(2, 8);
+  const path = `reports/${timestamp}_${randomId}.jpg`;
+  const ref = storage.ref(path);
+  await ref.putString(dataUrl, 'data_url', { contentType: 'image/jpeg' });
+  return ref.getDownloadURL();
+}
+
 // --- Submit ---
 async function submitReport() {
   overlay.classList.add('visible');
   errorBanner.classList.remove('visible');
 
   try {
+    let photoUrl = null;
+    if (photoDataUrl) {
+      photoUrl = await uploadPhoto(photoDataUrl);
+    }
+
     await db.collection('reports').add({
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       category: selectedCategory,
@@ -433,7 +449,7 @@ async function submitReport() {
       lat: currentLat,
       lng: currentLng,
       description: descriptionInput.value.trim() || null,
-      photo: photoDataUrl,
+      photo: photoUrl,
       reporterName: nameInput.value.trim() || null,
       reporterEmail: emailInput.value.trim() || null,
       status: 'pending',

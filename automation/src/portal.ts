@@ -290,23 +290,36 @@ export class PortalSubmitter {
 
   // ── Photo upload ───────────────────────────────────────────
 
-  private async uploadPhoto(photoDataUrl: string): Promise<void> {
+  private async uploadPhoto(photoSource: string): Promise<void> {
     const page = this.getPage();
 
     try {
-      // Convert base64 data URL to a temp file
-      const matches = photoDataUrl.match(/^data:image\/(\w+);base64,(.+)$/);
-      if (!matches) {
-        console.log('[portal]   Skipping photo upload — invalid data URL');
-        return;
-      }
-
-      const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
-      const buffer = Buffer.from(matches[2], 'base64');
       const tmpDir = join(tmpdir(), 'pvd311-photos');
       mkdirSync(tmpDir, { recursive: true });
-      const tmpPath = join(tmpDir, `report-photo.${ext}`);
-      writeFileSync(tmpPath, buffer);
+      let tmpPath: string;
+
+      if (photoSource.startsWith('data:')) {
+        // Legacy base64 data URL
+        const matches = photoSource.match(/^data:image\/(\w+);base64,(.+)$/);
+        if (!matches) {
+          console.log('[portal]   Skipping photo upload — invalid data URL');
+          return;
+        }
+        const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+        const buffer = Buffer.from(matches[2], 'base64');
+        tmpPath = join(tmpDir, `report-photo.${ext}`);
+        writeFileSync(tmpPath, buffer);
+      } else {
+        // Cloud Storage URL — fetch to a temp file
+        const resp = await fetch(photoSource);
+        if (!resp.ok) {
+          console.log(`[portal]   Skipping photo upload — fetch failed (${resp.status})`);
+          return;
+        }
+        const buffer = Buffer.from(await resp.arrayBuffer());
+        tmpPath = join(tmpDir, 'report-photo.jpg');
+        writeFileSync(tmpPath, buffer);
+      }
 
       // Use Playwright's file upload
       await page.setInputFiles('#AttachFile', tmpPath);

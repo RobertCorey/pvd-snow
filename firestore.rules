@@ -7,7 +7,14 @@ service cloud.firestore {
       allow create: if request.resource.data.status == 'pending'
                     && request.resource.data.keys().hasAll([
                       'timestamp', 'category', 'address', 'status'
-                    ]);
+                    ])
+                    && request.resource.data.category in ['unshoveled_sidewalk', 'missed_plowing']
+                    && request.resource.data.address is string
+                    && request.resource.data.address.size() > 0
+                    && request.resource.data.address.size() < 500
+                    && (request.resource.data.photo is string || request.resource.data.photo == null)
+                    && (request.resource.data.description is string || request.resource.data.description == null)
+                    && request.resource.size < 10 * 1024;
 
       // No client reads/updates/deletes — automation uses Admin SDK
       allow read, update, delete: if false;

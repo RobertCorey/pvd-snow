@@ -1,0 +1,13 @@
+{
+  "name": "pvd311",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve -l 3999 --no-clipboard public",
+    "test": "cd public && npx playwright test",
+    "build": "cd automation && npm run build",
+    "deploy": "firebase deploy --only hosting",
+    "deploy:rules": "firebase deploy --only firestore:rules,storage",
+    "deploy:all": "firebase deploy --only hosting,firestore:rules,storage",
+    "dashboard": "cd automation && npm start"
+  }
+}

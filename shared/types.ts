@@ -46,7 +46,7 @@ export interface SnowReport {
   /** Optional description from the reporter */
   description: string | null;
 
-  /** Photo as base64 data URL */
+  /** Photo URL (Cloud Storage download URL, or legacy base64 data URL) */
   photo: string | null;
 
   /** Optional reporter name */

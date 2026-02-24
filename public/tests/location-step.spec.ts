@@ -12,6 +12,19 @@ const firebaseMock = `
           };
         }
       };
+    },
+    storage() {
+      return {
+        ref() {
+          return {
+            putString() { return Promise.resolve(); },
+            getDownloadURL() { return Promise.resolve('https://firebasestorage.googleapis.com/mock-photo.jpg'); }
+          };
+        }
+      };
+    },
+    analytics() {
+      return { logEvent() {} };
     }
   };
   window.firebase.firestore.FieldValue = { serverTimestamp() { return new Date(); } };

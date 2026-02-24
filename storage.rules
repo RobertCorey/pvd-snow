@@ -4,7 +4,8 @@ service firebase.storage {
   match /b/{bucket}/o {
     match /reports/{fileName} {
       allow write: if request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+                   && request.resource.contentType.matches('image/.*')
+                   && fileName.matches('.*\\.(jpg|jpeg|png|webp)');
       allow read: if true;
       allow delete: if false;
     }
