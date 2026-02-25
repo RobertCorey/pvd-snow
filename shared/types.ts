@@ -19,10 +19,12 @@ export const CATEGORIES = {
 export type Category = keyof typeof CATEGORIES;
 
 export type ReportStatus =
-  | 'pending'      // Created by PWA, waiting for automation
-  | 'processing'   // Automation has picked it up
-  | 'submitted'    // Successfully submitted to 311 portal
-  | 'failed';      // Automation failed (see statusDetail)
+  | 'pending'        // Created by PWA, waiting for automation
+  | 'processing'     // Automation has picked it up
+  | 'submitted'      // Successfully submitted to 311 portal
+  | 'failed'         // Automation failed (see statusDetail)
+  | 'rejected'       // Manually rejected (spam, duplicate, etc.)
+  | 'auto-rejected'; // Auto-mode rejected (failed verification gate)
 
 export interface SnowReport {
   /** Firestore document ID (not stored in doc, used as reference) */

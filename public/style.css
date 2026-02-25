@@ -594,6 +594,30 @@ body::before {
   min-height: 1em;
 }
 
+/* Providence location warning */
+.pvd-warning {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(245, 166, 35, 0.1);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  border-radius: var(--radius);
+  color: var(--alert-amber);
+  font-size: 0.82rem;
+  font-weight: 500;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+.pvd-warning.visible {
+  display: flex;
+}
+
+.pvd-warning svg {
+  flex-shrink: 0;
+}
+
 /* #2: location helper hint */
 .location-hint {
   font-size: 0.78rem;
@@ -951,18 +975,21 @@ textarea.text-input {
 /* === SHARE SECTION === */
 .share-section {
   width: 100%;
-  max-width: 300px;
+  max-width: 340px;
   margin-bottom: 20px;
+  background: linear-gradient(135deg, rgba(126, 200, 227, 0.08), rgba(126, 200, 227, 0.03));
+  border: 1px solid rgba(126, 200, 227, 0.15);
+  border-radius: var(--radius-lg);
+  padding: 16px;
 }
 
 .share-label {
   font-family: 'Outfit', sans-serif;
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-  margin-bottom: 8px;
+  color: var(--ice-300);
+  margin-bottom: 12px;
+  text-align: center;
 }
 
 .share-buttons {
@@ -976,7 +1003,7 @@ textarea.text-input {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px 14px;
+  padding: 12px 14px;
   background: var(--navy-700);
   border: 1.5px solid var(--border);
   border-radius: var(--radius);
@@ -987,6 +1014,14 @@ textarea.text-input {
   cursor: pointer;
   transition: all 0.15s ease;
   -webkit-tap-highlight-color: transparent;
+}
+
+.share-btn-primary {
+  flex: 1.6;
+  background: linear-gradient(135deg, var(--ice-400), #5bb8d4);
+  border-color: transparent;
+  color: var(--navy-900);
+  font-weight: 700;
 }
 
 .share-btn:active {

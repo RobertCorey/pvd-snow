@@ -61,6 +61,23 @@ const errorBanner = document.getElementById('errorBanner');
 const errorText = document.getElementById('errorText');
 const errorDismiss = document.getElementById('errorDismiss');
 
+const pvdWarning = document.getElementById('pvdWarning');
+
+const PVD_BOUNDS = { minLat: 41.772, maxLat: 41.871, minLng: -71.473, maxLng: -71.370 };
+
+function checkProvidenceBounds() {
+  if (currentLat != null && currentLng != null) {
+    const inside = currentLat >= PVD_BOUNDS.minLat && currentLat <= PVD_BOUNDS.maxLat &&
+                   currentLng >= PVD_BOUNDS.minLng && currentLng <= PVD_BOUNDS.maxLng;
+    if (!inside) {
+      pvdWarning.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> <span>This location appears to be outside Providence. PVD Snow only submits reports within city limits.</span>';
+      pvdWarning.classList.add('visible');
+      return;
+    }
+  }
+  pvdWarning.classList.remove('visible');
+}
+
 const TOTAL_STEPS = 4;
 let currentStep = 0;
 
@@ -194,9 +211,11 @@ photoInput.addEventListener('change', async (e) => {
     photoExifStatus.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,7 6,10 11,4"/></svg> Photo + location attached';
     photoExifStatus.classList.remove('no-gps');
     setLocationState('confirmed');
+    checkProvidenceBounds();
     reverseGeocode(currentLat, currentLng);
   } else {
     hasExifGps = false;
+    pvdWarning.classList.remove('visible');
     locationStatus.textContent = 'No location in photo. Use Detect or type an address.';
     photoExifStatus.textContent = 'Photo attached — no location data';
     photoExifStatus.classList.add('no-gps');
@@ -364,8 +383,16 @@ async function reverseGeocode(lat, lng) {
       addressInput.value = a.Address || a.ShortLabel || a.Match_addr || '';
       validateStep();
     }
+    if (!addressInput.value.trim()) {
+      locationStatus.textContent = 'Could not look up address. Please type it in.';
+      setLocationState('needs-input');
+      addressInput.focus();
+    }
   } catch (err) {
     console.error('Reverse geocode failed:', err);
+    locationStatus.textContent = 'Could not look up address. Please type it in.';
+    setLocationState('needs-input');
+    addressInput.focus();
   }
 }
 
@@ -391,6 +418,7 @@ detectBtn.addEventListener('click', () => {
       locationStatus.textContent = 'Location detected from GPS.';
       logEvent('location_detected', { method: 'gps' });
       setLocationState('confirmed');
+      checkProvidenceBounds();
       reverseGeocode(currentLat, currentLng);
     },
     () => {
@@ -399,7 +427,7 @@ detectBtn.addEventListener('click', () => {
       setLocationState('detect-failed');
       addressInput.focus();
     },
-    { enableHighAccuracy: true, timeout: 10000 }
+    { enableHighAccuracy: true, timeout: 20000 }
   );
 });
 
@@ -436,13 +464,23 @@ async function submitReport() {
   overlay.classList.add('visible');
   errorBanner.classList.remove('visible');
 
+  if (!navigator.onLine) {
+    overlay.classList.remove('visible');
+    showError('No internet connection. Please try again.');
+    return;
+  }
+
   try {
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), 30000)
+    );
+
     let photoUrl = null;
     if (photoDataUrl) {
-      photoUrl = await uploadPhoto(photoDataUrl);
+      photoUrl = await Promise.race([uploadPhoto(photoDataUrl), timeout]);
     }
 
-    await db.collection('reports').add({
+    await Promise.race([db.collection('reports').add({
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       category: selectedCategory,
       address: addressInput.value.trim(),
@@ -456,7 +494,7 @@ async function submitReport() {
       statusDetail: null,
       portalCaseId: null,
       statusUpdatedAt: null
-    });
+    }), timeout]);
 
     overlay.classList.remove('visible');
     wizard.style.display = 'none';
@@ -467,13 +505,18 @@ async function submitReport() {
     confirmCategory.textContent = CATEGORY_LABELS[selectedCategory] || selectedCategory;
     confirmAddress.textContent = addressInput.value.trim();
     confirmation.classList.add('visible');
-    logEvent('report_submitted', { category: selectedCategory });
+    const locationMethod = hasExifGps ? 'photo_exif'
+      : (currentLat && currentLng) ? 'device_gps'
+      : 'manual_entry';
+    logEvent('report_submitted', { category: selectedCategory, location_method: locationMethod });
 
   } catch (err) {
     console.error('Submission failed:', err);
     overlay.classList.remove('visible');
     logEvent('submit_error', { error: err.message || String(err) });
-    showError('Submission failed. Please check your connection and try again.');
+    showError(err.message === 'timeout'
+      ? 'Submission timed out. Please check your connection and try again.'
+      : 'Submission failed. Please check your connection and try again.');
   }
 }
 
@@ -526,6 +569,7 @@ submitAnother.addEventListener('click', () => {
   contactToggle.classList.remove('open');
   contactFields.classList.remove('visible');
   errorBanner.classList.remove('visible');
+  pvdWarning.classList.remove('visible');
 
   wizard.style.display = '';
   document.getElementById('wizardNav').style.display = '';

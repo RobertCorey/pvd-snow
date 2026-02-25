@@ -15,4 +15,13 @@ export const config = {
   portalBaseUrl: 'https://311.providenceri.gov',
   headless: process.env['HEADLESS'] === 'true',
   port: parseInt(process.env['PORT'] || '3311', 10),
+
+  // Auto-submission mode
+  autoMode: process.argv.includes('--auto'),
+  autoPollIntervalMs: 60_000,          // Check for pending reports every 60s
+  autoSubmissionDelayMs: 45_000,       // Minimum gap between submissions
+  autoMaxPerHour: 15,                  // Max submissions per rolling hour
+  autoCircuitBreakerThreshold: 3,      // Pause after N consecutive failures
+  autoDuplicateWindowHours: 24,        // Duplicate detection window
+  autoDuplicateDistanceMeters: 50,     // Haversine distance threshold
 };

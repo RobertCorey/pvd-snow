@@ -145,6 +145,8 @@
     .badge.processing { background: rgba(210,153,34,0.15); color: var(--yellow); }
     .badge.submitted  { background: rgba(63,185,80,0.15);  color: var(--green); }
     .badge.failed     { background: rgba(248,81,73,0.15);  color: var(--red); }
+    .badge.rejected   { background: rgba(125,133,144,0.15); color: var(--text-muted); }
+    .badge.location-warn { background: rgba(210,153,34,0.15); color: var(--yellow); font-size: 10px; }
 
     .actions { display: flex; gap: 6px; }
 
@@ -289,13 +291,69 @@
       transition: transform 0.2s ease;
     }
     .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Auto-mode ── */
+    .auto-pill {
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      user-select: none;
+    }
+    .auto-pill.on  { background: rgba(63,185,80,0.15); border-color: var(--green); color: var(--green); }
+    .auto-pill.paused { background: rgba(210,153,34,0.15); border-color: var(--yellow); color: var(--yellow); }
+
+    .header-pills { display: flex; align-items: center; gap: 8px; }
+
+    .badge.auto-rejected { background: rgba(210,153,34,0.15); color: var(--yellow); }
+
+    .auto-log {
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .auto-log-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .auto-log-body {
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .auto-log-entry {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      padding: 6px 16px;
+      font-size: 12px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .auto-log-entry:last-child { border-bottom: none; }
+    .auto-log-time { color: var(--text-muted); white-space: nowrap; }
+    .auto-log-detail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   </style>
 </head>
 <body>
   <div class="shell">
     <header>
       <h1>PVD311 Dashboard</h1>
-      <span class="status-pill" id="serverStatus">Idle</span>
+      <div class="header-pills">
+        <button class="auto-pill" id="autoPill" title="Toggle auto-submission mode">Auto: OFF</button>
+        <span class="status-pill" id="serverStatus">Idle</span>
+      </div>
     </header>
 
     <div class="tabs" id="tabs">
@@ -304,9 +362,18 @@
       <button class="tab" data-filter="processing">Processing <span class="count" id="countProcessing">0</span></button>
       <button class="tab" data-filter="submitted">Submitted <span class="count" id="countSubmitted">0</span></button>
       <button class="tab" data-filter="failed">Failed <span class="count" id="countFailed">0</span></button>
+      <button class="tab" data-filter="rejected">Rejected <span class="count" id="countRejected">0</span></button>
     </div>
 
     <div id="reportList"></div>
+
+    <div class="auto-log" id="autoLogSection" style="display:none">
+      <div class="auto-log-header" onclick="document.getElementById('autoLogBody').style.display = document.getElementById('autoLogBody').style.display === 'none' ? '' : 'none'">
+        <span>Auto-Mode Activity</span>
+        <span style="font-weight:400; color:var(--text-muted)" id="autoLogCount">0 entries</span>
+      </div>
+      <div class="auto-log-body" id="autoLogBody"></div>
+    </div>
   </div>
 
   <!-- Detail slide-over -->
@@ -325,6 +392,8 @@
 
   <script>
     let reports = [];
+    let knownIds = new Set();
+    let firstLoad = true;
     let currentFilter = 'all';
     let pollTimer = null;
 
@@ -363,16 +432,41 @@
       return map[cat] || cat;
     }
 
+    // ── Providence boundary check ──
+    // Bounding box for Providence, RI (generous but catches obvious outliers)
+    const PVD_BOUNDS = { minLat: 41.772, maxLat: 41.871, minLng: -71.473, maxLng: -71.370 };
+
+    function isInProvidence(lat, lng) {
+      if (lat == null || lng == null) return null; // unknown
+      return lat >= PVD_BOUNDS.minLat && lat <= PVD_BOUNDS.maxLat &&
+             lng >= PVD_BOUNDS.minLng && lng <= PVD_BOUNDS.maxLng;
+    }
+
+    function locationBadge(r) {
+      if (r.lat == null || r.lng == null) return '<span class="badge location-warn">NO COORDS</span>';
+      if (!isInProvidence(r.lat, r.lng)) return '<span class="badge location-warn">OUTSIDE PVD</span>';
+      return '';
+    }
+
+    function statusMatch(status, filter) {
+      if (filter === 'all') return true;
+      if (filter === 'rejected') return status === 'rejected' || status === 'auto-rejected';
+      return status === filter;
+    }
+
     function renderList() {
       const filtered = currentFilter === 'all'
         ? reports
-        : reports.filter(r => r.status === currentFilter);
+        : reports.filter(r => statusMatch(r.status, currentFilter));
 
       // Update counts
       for (const s of ['pending', 'processing', 'submitted', 'failed']) {
         const el = $(`#count${s[0].toUpperCase() + s.slice(1)}`);
         if (el) el.textContent = reports.filter(r => r.status === s).length;
       }
+      // Rejected count includes auto-rejected
+      const rejEl = $('#countRejected');
+      if (rejEl) rejEl.textContent = reports.filter(r => r.status === 'rejected' || r.status === 'auto-rejected').length;
 
       const container = $('#reportList');
       if (filtered.length === 0) {
@@ -390,10 +484,12 @@
               ${r.statusDetail && r.status === 'failed' ? ' · ' + r.statusDetail : ''}
             </div>
           </div>
-          <span class="badge ${r.status}">${r.status}</span>
+          ${locationBadge(r)}
+          <span class="badge ${r.status === 'auto-rejected' ? 'auto-rejected' : r.status}">${r.status}</span>
           <div class="actions">
-            ${r.status === 'pending' ? `<button class="btn" onclick="event.stopPropagation(); submitReport('${r.id}', true)">Dry Run</button><button class="btn primary" onclick="event.stopPropagation(); submitReport('${r.id}')">Submit to 311</button>` : ''}
+            ${r.status === 'pending' ? `<button class="btn danger" onclick="event.stopPropagation(); rejectReport('${r.id}')">Won't Do</button><button class="btn" onclick="event.stopPropagation(); submitReport('${r.id}', true)">Dry Run</button><button class="btn primary" onclick="event.stopPropagation(); submitReport('${r.id}')">Submit to 311</button>` : ''}
             ${r.status === 'failed' ? `<button class="btn danger" onclick="event.stopPropagation(); resetReport('${r.id}')">Reset</button>` : ''}
+            ${r.status === 'rejected' || r.status === 'auto-rejected' ? `<button class="btn" onclick="event.stopPropagation(); resetReport('${r.id}')">Undo</button>` : ''}
           </div>
         </div>
       `).join('') + '</div>';
@@ -428,11 +524,11 @@
         </div>
         <div class="detail-field">
           <label>Address</label>
-          <div class="val">${r.address || '—'}</div>
+          <div class="val">${r.address ? `<a href="https://www.google.com/maps/search/${encodeURIComponent(r.address + ', Providence, RI')}" target="_blank" rel="noopener" style="color:var(--accent)">${r.address}</a>` : '—'}</div>
         </div>
         <div class="detail-field">
           <label>Coordinates</label>
-          <div class="val">${r.lat != null ? `${r.lat}, ${r.lng}` : '—'}</div>
+          <div class="val">${r.lat != null ? `<a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" rel="noopener" style="color:var(--accent)">${r.lat}, ${r.lng}</a>${isInProvidence(r.lat, r.lng) === false ? ' <span class="badge location-warn">OUTSIDE PVD</span>' : ''}` : '<span class="badge location-warn">NO COORDS</span>'}</div>
         </div>
         <div class="detail-field">
           <label>Description</label>
@@ -451,11 +547,15 @@
 
       const btns = [];
       if (r.status === 'pending') {
+        btns.push(`<button class="btn danger" onclick="rejectReport('${r.id}'); closeDetail();">Won't Do</button>`);
         btns.push(`<button class="btn" onclick="submitReport('${r.id}', true); closeDetail();">Dry Run</button>`);
         btns.push(`<button class="btn primary" onclick="submitReport('${r.id}'); closeDetail();">Submit to 311</button>`);
       }
       if (r.status === 'failed' || r.status === 'submitted') {
         btns.push(`<button class="btn" onclick="resetReport('${r.id}'); closeDetail();">Reset to Pending</button>`);
+      }
+      if (r.status === 'rejected' || r.status === 'auto-rejected') {
+        btns.push(`<button class="btn" onclick="resetReport('${r.id}'); closeDetail();">Undo — Reset to Pending</button>`);
       }
       actions.innerHTML = btns.join('');
     }
@@ -482,9 +582,47 @@
       await refresh();
     }
 
+    async function rejectReport(id) {
+      const reason = prompt('Reason (optional):', 'spam / duplicate');
+      if (reason === null) return; // cancelled
+      await api('POST', '/api/reject', { id, reason: reason || 'Rejected' });
+      toast('Report marked as won\'t do');
+      await refresh();
+    }
+
+    // ── Notification sound ──
+    function playNotificationSound() {
+      try {
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.setValueAtTime(1047, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.3);
+      } catch {}
+    }
+
     // ── Data loading ──
     async function refresh() {
       reports = await api('GET', '/api/reports');
+
+      if (firstLoad) {
+        knownIds = new Set(reports.map(r => r.id));
+        firstLoad = false;
+      } else {
+        const newReports = reports.filter(r => !knownIds.has(r.id));
+        if (newReports.length > 0) {
+          playNotificationSound();
+          toast(`${newReports.length} new report${newReports.length > 1 ? 's' : ''}`);
+          newReports.forEach(r => knownIds.add(r.id));
+        }
+      }
+
       renderList();
 
       const status = await api('GET', '/api/status');
@@ -521,10 +659,75 @@
       renderList();
     });
 
+    // ── Auto-mode ──
+    let autoState = null;
+    let lastAutoLogLen = 0;
+
+    async function refreshAuto() {
+      try {
+        autoState = await api('GET', '/api/auto');
+        // If auto-submitter logged a new event, refresh reports immediately
+        if (autoState.log.length !== lastAutoLogLen) {
+          lastAutoLogLen = autoState.log.length;
+          refresh();
+        }
+        const pill = $('#autoPill');
+        pill.classList.remove('on', 'paused');
+        if (autoState.paused) {
+          pill.textContent = 'Auto: PAUSED';
+          pill.classList.add('paused');
+          pill.title = `Paused — ${autoState.consecutiveFailures} failures. Click to resume.`;
+        } else if (autoState.enabled) {
+          pill.textContent = `Auto: ON (${autoState.submissionsThisHour}/hr)`;
+          pill.classList.add('on');
+          pill.title = 'Click to disable auto-submission';
+        } else {
+          pill.textContent = 'Auto: OFF';
+          pill.title = 'Click to enable auto-submission';
+        }
+
+        // Activity log
+        const section = $('#autoLogSection');
+        const logBody = $('#autoLogBody');
+        const logCount = $('#autoLogCount');
+        if (autoState.log.length > 0 || autoState.enabled || autoState.paused) {
+          section.style.display = '';
+          logCount.textContent = `${autoState.log.length} entries`;
+          logBody.innerHTML = autoState.log.slice().reverse().map(entry => {
+            const color = entry.action === 'submitted' ? 'var(--green)' :
+                          entry.action === 'auto-rejected' ? 'var(--yellow)' : 'var(--red)';
+            const time = new Date(entry.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+            return `<div class="auto-log-entry">
+              <span class="auto-log-time">${time}</span>
+              <span class="auto-log-detail">${entry.reportId.slice(0, 8)}… — ${entry.detail}</span>
+              <span style="color:${color}; font-weight:500; text-transform:uppercase; font-size:11px">${entry.action}</span>
+            </div>`;
+          }).join('');
+        } else {
+          section.style.display = 'none';
+        }
+      } catch {}
+    }
+
+    $('#autoPill').addEventListener('click', async () => {
+      if (!autoState) return;
+      if (autoState.paused) {
+        await api('POST', '/api/auto/resume');
+        toast('Auto-mode resumed');
+      } else {
+        await api('POST', '/api/auto', { enabled: !autoState.enabled });
+        toast(autoState.enabled ? 'Auto-mode disabled' : 'Auto-mode enabled');
+      }
+      await refreshAuto();
+    });
+
     // ── Init ──
     refresh();
-    // Light background poll to pick up new reports
-    setInterval(refresh, 15000);
+    refreshAuto();
+    // Full report refresh every 5 min (costs Firestore reads)
+    setInterval(() => refresh(), 300000);
+    // Auto-state poll every 10s (free — in-memory only, triggers refresh on new activity)
+    setInterval(() => refreshAuto(), 10000);
   </script>
 </body>
 </html>

@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc && cp src/dashboard.html dist/automation/src/",
     "start": "node dist/automation/src/index.js",
-    "dev": "tsc && cp src/dashboard.html dist/automation/src/ && node dist/automation/src/index.js"
+    "dev": "tsc && cp src/dashboard.html dist/automation/src/ && node dist/automation/src/index.js",
+    "auth": "tsc && node dist/automation/src/auth.js"
   },
   "dependencies": {
     "dotenv": "^17.3.1",

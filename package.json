@@ -9,5 +9,8 @@
     "deploy:rules": "firebase deploy --only firestore:rules,storage",
     "deploy:all": "firebase deploy --only hosting,firestore:rules,storage",
     "dashboard": "cd automation && npm start"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
   }
 }

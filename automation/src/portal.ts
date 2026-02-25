@@ -127,18 +127,47 @@ export class PortalSubmitter {
 
     // Set request type to "Problem"
     await page.selectOption('#casetypecode', '2');
+    await page.waitForTimeout(500);
 
     // Open case type lookup modal
     await page.click('button[aria-label="Case Type Launch lookup modal"]');
     await page.waitForSelector('.modal.in .query.form-control', { timeout: 10_000 });
+    await page.waitForTimeout(500);
 
-    // Search for the case type
-    await page.fill('.modal.in .query.form-control', catConfig.portalSearchTerm);
+    // Clear any pre-filled value, then type the search term slowly so the
+    // Dynamics 365 portal registers keystrokes and fires input events.
+    const searchInput = page.locator('.modal.in .query.form-control');
+    await searchInput.clear();
+    await searchInput.pressSequentially(catConfig.portalSearchTerm, { delay: 80 });
+    await page.waitForTimeout(300);
+
+    // Click search and wait for the portal to process the query
     await page.click('.modal.in button[aria-label="Search Results"]');
-    await page.waitForSelector('.modal.in table tbody tr', { timeout: 10_000 });
+    await page.waitForTimeout(1_500);
 
-    // Select the first result
-    await page.click('.modal.in table tbody tr span[role="checkbox"]');
+    // Wait for a result row that actually matches our search term.
+    // The modal may still show the full A-Z list if search didn't filter,
+    // so we poll for a row containing our keyword.
+    const searchKey = catConfig.portalSearchTerm.replace(/\*/g, '').toLowerCase();
+    const matchingRow = page.locator('.modal.in table tbody tr', {
+      hasText: new RegExp(searchKey, 'i'),
+    }).first();
+    await matchingRow.waitFor({ timeout: 10_000 });
+
+    // Final safety check: confirm the row text before clicking
+    const rowText = await matchingRow.textContent();
+    if (!rowText?.toLowerCase().includes(searchKey)) {
+      throw new Error(
+        `Category mismatch in case type lookup: searched "${catConfig.portalSearchTerm}" ` +
+        `for "${catConfig.label}", but got "${rowText?.trim()}"`
+      );
+    }
+    console.log(`[portal]   Case type matched: "${rowText?.trim().substring(0, 60)}"`);
+
+    // Select the matching result
+    await page.waitForTimeout(300);
+    await matchingRow.locator('span[role="checkbox"]').click();
+    await page.waitForTimeout(500);
     await page.click('.modal.in .primary.btn.btn-primary');
 
     // Wait for modal to close

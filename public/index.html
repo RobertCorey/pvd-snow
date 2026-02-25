@@ -4,10 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#1e3a5f">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <title>PVD Snow</title>
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/icons/icon-192.svg">
-  <link rel="stylesheet" href="/style.css?v=6">
+  <meta name="description" content="Report unplowed streets & unshoveled sidewalks in Providence — takes 30 seconds">
+  <meta property="og:title" content="PVD Snow">
+  <meta property="og:description" content="Report unplowed streets & unshoveled sidewalks in Providence — takes 30 seconds">
+  <meta property="og:url" content="https://pvdsnow.org">
+  <meta property="og:image" content="https://pvdsnow.org/og-image.png">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PVD Snow">
+  <meta name="twitter:description" content="Report unplowed streets & unshoveled sidewalks in Providence — takes 30 seconds">
+  <meta name="twitter:image" content="https://pvdsnow.org/og-image.png">
+  <link rel="stylesheet" href="/style.css?v=11">
 </head>
 <body>
   <div class="app-container">
@@ -27,7 +38,7 @@
         PVD Snow
       </h1>
       <p class="app-subtitle">Report unplowed streets &amp; unshoveled sidewalks in Providence</p>
-      <p class="community-badge">Community project &mdash; not affiliated with the City of Providence <span class="version">v9</span></p>
+      <p class="community-badge">Community project &mdash; not affiliated with the City of Providence <span class="version">v11</span></p>
       <div class="header-line"></div>
     </header>
 
@@ -116,6 +127,7 @@
           <div class="location-divider"><span>or enter address manually</span></div>
           <input type="text" class="text-input" id="addressInput" placeholder="Street address or intersection" autocomplete="street-address">
           <div class="lat-lng" id="latLng"></div>
+          <div class="pvd-warning" id="pvdWarning"></div>
           <p class="location-hint">Enter the nearest address or intersection, e.g. "Benefit St &amp; Waterman St"</p>
         </div>
       </div>
@@ -197,15 +209,15 @@
         <div class="confirm-summary-row"><span class="confirm-label">Location</span> <span id="confirmAddress"></span></div>
       </div>
       <div class="share-section">
-        <p class="share-label">Spread the word</p>
+        <p class="share-label">Know someone with an unplowed street?</p>
         <div class="share-buttons">
-          <button type="button" class="share-btn" id="shareNative">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <button type="button" class="share-btn share-btn-primary" id="shareNative">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/>
               <polyline points="16,6 12,2 8,6"/>
               <line x1="12" y1="2" x2="12" y2="15"/>
             </svg>
-            Share
+            Share with neighbors
           </button>
           <button type="button" class="share-btn" id="shareCopy">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -225,7 +237,7 @@
       <p class="footer-links">
         <a href="https://311.providenceri.gov" target="_blank" rel="noopener">Use the official 311 portal directly</a>
       </p>
-      <p class="footer-copy">PVD Snow &middot; Providence, RI</p>
+      <p class="footer-copy">PVD Snow &middot; Providence, RI &middot; <a href="mailto:pvdsnow@proton.me">pvdsnow@proton.me</a></p>
     </footer>
   </div>
 
@@ -242,7 +254,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
 
   <!-- App -->
-  <script src="/app.js?v=6"></script>
+  <script src="/app.js?v=12"></script>
 
   <!-- Service Worker -->
   <script>

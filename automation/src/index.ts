@@ -5,11 +5,18 @@ import { fileURLToPath } from 'node:url';
 import { initFirestore, fetchAllReports, fetchReport, updateReportStatus } from './firestore.js';
 import { PortalSubmitter } from './portal.js';
 import { config } from './config.js';
+import { AutoSubmitter } from './auto.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Track active submission so we don't double-submit
 let activeSubmission: string | null = null;
+
+// Auto-submission engine
+const autoSubmitter = new AutoSubmitter(
+  () => activeSubmission !== null,
+  (id) => { activeSubmission = id; },
+);
 
 function json(res: ServerResponse, status: number, data: unknown): void {
   res.writeHead(status, { 'Content-Type': 'application/json' });
@@ -98,9 +105,39 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     return;
   }
 
+  // ── API: reject a report (spam, duplicate, won't do) ──
+  if (req.method === 'POST' && url.pathname === '/api/reject') {
+    const body = JSON.parse(await readBody(req)) as { id: string; reason?: string };
+    if (!body.id) { json(res, 400, { error: 'Missing report id' }); return; }
+    await updateReportStatus(body.id, 'rejected' as any, body.reason || 'Rejected from dashboard');
+    json(res, 200, { status: 'rejected', id: body.id });
+    return;
+  }
+
   // ── API: check if a submission is active ──
   if (req.method === 'GET' && url.pathname === '/api/status') {
     json(res, 200, { activeSubmission });
+    return;
+  }
+
+  // ── API: auto-mode state ──
+  if (req.method === 'GET' && url.pathname === '/api/auto') {
+    json(res, 200, autoSubmitter.getState());
+    return;
+  }
+
+  // ── API: toggle auto-mode ──
+  if (req.method === 'POST' && url.pathname === '/api/auto') {
+    const body = JSON.parse(await readBody(req)) as { enabled: boolean };
+    autoSubmitter.setEnabled(!!body.enabled);
+    json(res, 200, autoSubmitter.getState());
+    return;
+  }
+
+  // ── API: resume auto-mode (reset circuit breaker) ──
+  if (req.method === 'POST' && url.pathname === '/api/auto/resume') {
+    autoSubmitter.resume();
+    json(res, 200, autoSubmitter.getState());
     return;
   }
 
@@ -154,6 +191,10 @@ async function main(): Promise<void> {
 
   server.listen(config.port, () => {
     console.log(`[main] Dashboard running at http://localhost:${config.port}`);
+    if (config.autoMode) {
+      console.log('[main] Auto-submission mode enabled (--auto)');
+      autoSubmitter.start();
+    }
   });
 }
 
