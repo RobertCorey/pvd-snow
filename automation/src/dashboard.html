@@ -351,6 +351,7 @@
     <header>
       <h1>PVD311 Dashboard</h1>
       <div class="header-pills">
+        <button class="auto-pill" id="headlessPill" title="Toggle headed/headless browser mode">Headed</button>
         <button class="auto-pill" id="autoPill" title="Toggle auto-submission mode">Auto: OFF</button>
         <span class="status-pill" id="serverStatus">Idle</span>
       </div>
@@ -721,9 +722,36 @@
       await refreshAuto();
     });
 
+    // ── Headless toggle ──
+    let headlessMode = false;
+
+    async function refreshHeadless() {
+      try {
+        const status = await api('GET', '/api/status');
+        headlessMode = !!status.headless;
+        const pill = $('#headlessPill');
+        pill.classList.remove('on');
+        if (headlessMode) {
+          pill.textContent = 'Headless';
+          pill.title = 'Browser runs hidden — click to switch to headed';
+        } else {
+          pill.textContent = 'Headed';
+          pill.classList.add('on');
+          pill.title = 'Browser window visible — click to switch to headless';
+        }
+      } catch {}
+    }
+
+    $('#headlessPill').addEventListener('click', async () => {
+      await api('POST', '/api/headless', { headless: !headlessMode });
+      toast(headlessMode ? 'Switched to headed mode' : 'Switched to headless mode');
+      await refreshHeadless();
+    });
+
     // ── Init ──
     refresh();
     refreshAuto();
+    refreshHeadless();
     // Full report refresh every 5 min (costs Firestore reads)
     setInterval(() => refresh(), 300000);
     // Auto-state poll every 10s (free — in-memory only, triggers refresh on new activity)

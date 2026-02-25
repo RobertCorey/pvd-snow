@@ -116,7 +116,16 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
 
   // ── API: check if a submission is active ──
   if (req.method === 'GET' && url.pathname === '/api/status') {
-    json(res, 200, { activeSubmission });
+    json(res, 200, { activeSubmission, headless: config.headless });
+    return;
+  }
+
+  // ── API: toggle headless mode ──
+  if (req.method === 'POST' && url.pathname === '/api/headless') {
+    const body = JSON.parse(await readBody(req)) as { headless: boolean };
+    config.headless = !!body.headless;
+    console.log(`[main] Headless mode ${config.headless ? 'enabled' : 'disabled'}`);
+    json(res, 200, { headless: config.headless });
     return;
   }
 
