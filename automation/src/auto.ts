@@ -136,10 +136,18 @@ export class AutoSubmitter {
     // Gate 2: Has address
     if (!report.address || !report.address.trim()) return 'No address';
 
-    // Gate 3: Valid category
+    // Gate 3: Address blocklist (spam/abuse)
+    const addr = report.address.trim().toLowerCase();
+    for (const blocked of config.blockedAddresses) {
+      if (addr.includes(blocked.toLowerCase())) {
+        return `Blocked address: "${report.address}" matches "${blocked}"`;
+      }
+    }
+
+    // Gate 4: Valid category
     if (!(report.category in CATEGORIES)) return `Invalid category: ${report.category}`;
 
-    // Gate 4 & 5: If coordinates are present, verify they're inside Providence
+    // Gate 5: If coordinates are present, verify they're inside Providence
     if (report.lat != null && report.lng != null) {
       if (
         report.lat < PVD_BOUNDS.minLat || report.lat > PVD_BOUNDS.maxLat ||

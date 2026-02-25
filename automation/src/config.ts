@@ -24,4 +24,8 @@ export const config = {
   autoCircuitBreakerThreshold: 3,      // Pause after N consecutive failures
   autoDuplicateWindowHours: 24,        // Duplicate detection window
   autoDuplicateDistanceMeters: 50,     // Haversine distance threshold
+
+  // Address blocklist (substring match, case-insensitive)
+  blockedAddresses: (process.env['BLOCKED_ADDRESSES'] || 'congdon st,congdon street')
+    .split(',').map(s => s.trim()).filter(Boolean),
 };
