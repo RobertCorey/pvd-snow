@@ -305,11 +305,33 @@ export class PortalSubmitter {
       return undefined;
     }
 
-    // Submit
-    await page.click('#NextButton');
+    // Submit — click and wait for navigation, but also detect validation errors
+    // The portal's onclick runs webFormClientValidate(); if it fails, no navigation happens.
+    // We also handle the case where the button changes to "Processing..." but the post hangs.
+    const navPromise = page.waitForURL(/my-requests|New-Request/, { timeout: 60_000 });
 
-    // Wait for navigation away from the wizard (back to my-requests or a confirmation)
-    await page.waitForURL(/my-requests|New-Request/, { timeout: STEP_TIMEOUT });
+    await page.click('#NextButton', { timeout: 10_000 });
+
+    // Check if the button changed to "Processing..." (means validation passed, form is submitting)
+    // or if the page stayed put with a validation error
+    const result = await Promise.race([
+      navPromise.then(() => 'navigated' as const),
+      page.waitForTimeout(5_000).then(async () => {
+        // After 5s, check if the button says "Processing..." — if so, keep waiting
+        const btnValue = await page.$eval('#NextButton', (el: any) => el.value).catch(() => '');
+        if (btnValue === 'Processing...') {
+          // Form is submitting, just slow — wait for the full navigation
+          await navPromise;
+          return 'navigated' as const;
+        }
+        // Button didn't change — likely a validation error
+        const errorText = await page.$eval('.validation-summary-errors', (el: any) => el.textContent?.trim()).catch(() => '');
+        throw new Error(
+          `Portal form validation failed${errorText ? ': ' + errorText : ' (form did not submit — button still shows "Submit")'}`
+        );
+      }),
+    ]);
+
     console.log('[portal]   Step 3 complete — report submitted');
 
     // Try to extract case ID from the my-requests page
