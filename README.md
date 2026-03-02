@@ -4,7 +4,7 @@
 
 ---
 
-PVD Snow (2024–2026) was a community app for reporting unplowed streets and unshoveled sidewalks in Providence, RI. It was not affiliated with the City of Providence.
+PVD Snow was a community app for reporting unplowed streets and unshoveled sidewalks in Providence, RI. It was not affiliated with the City of Providence.
 
 Residents opened [pvdsnow.org](https://pvdsnow.org), picked the issue, snapped a photo, and confirmed the location. Reports landed in Firestore, and a Playwright-based automation engine forwarded them to the city's official 311 portal.
 
