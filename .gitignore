@@ -22,3 +22,6 @@ automation/.env
 
 # Misc local files
 proton-mail/
+.DS_Store
+.claude/
+public/test-results/
